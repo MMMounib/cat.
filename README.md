@@ -1,96 +1,208 @@
 # cat
 
-**Petit addon serveur pour Garry's Mod : anti-ESP + vérification des scripts + capture d'écran.**
+**Addon serveur Garry's Mod pour l'anti-ESP, la vérification des scripts et la capture d'écran.**
 
-`cat` est un outil de modération léger, sobre et autonome. Il fait trois choses, bien, et rien d'autre : il empêche les ESP de fonctionner, il permet à un admin d'inspecter les scripts d'un joueur, et il permet de voir ce qu'un joueur a à l'écran. Le tout se règle depuis un menu en jeu, réservé aux admins.
+Cat est un outil de modération simple et autonome.
 
-Compatible tout gamemode (DarkRP, TTT, Sandbox, RP custom…), pensé pour tenir jusqu'à ~128 joueurs.
+Il permet aux administrateurs de :
+
+- protéger les joueurs contre les ESP grâce au filtrage réseau ;
+- vérifier les fichiers présents dans le dossier Garry's Mod d'un joueur ;
+- demander une capture de ce que le joueur voit dans le jeu ;
+- consulter les actions effectuées avec Cat.
+
+L'interface est directement accessible en jeu et reste volontairement simple.
+
+Compatible avec DarkRP, TTT, Sandbox et les gamemodes personnalisés.
 
 ---
 
 ## Fonctionnalités
 
-### 1. Anti-ESP
-Le cœur du projet. Un joueur (et ses armes) n'est envoyé aux autres joueurs **que s'il peut réellement être vu**. Un joueur derrière un mur n'existe tout simplement plus côté réseau : un ESP n'a alors plus aucune information à afficher.
+### Anti-ESP
 
-Tout est décidé côté serveur, le client n'est jamais cru. Le système est optimisé pour un serveur peuplé :
-- filtrage par distance avant tout calcul ;
-- cache de mouvement (rien n'est recalculé si personne n'a bougé) ;
-- lignes de vue vérifiées seulement quand nécessaire, réparties dans le temps ;
-- délai et anticipation pour éviter les clignotements et les apparitions en retard.
+L'anti-ESP est la fonction principale de Cat.
 
-### 2. Vérification des scripts
-Un admin peut lister et lire les fichiers du dossier Garry's Mod d'un joueur (et **uniquement** ce dossier — le Lua ne peut pas lire ailleurs sur le PC). Les fichiers correspondant à une signature connue (ESP, API de cheat, etc.) sont signalés en rouge, avec un lecteur de code intégré qui surligne les lignes suspectes.
+Le serveur décide quelles informations doivent être transmises à chaque joueur. Lorsqu'un joueur ne peut pas être vu, son entité peut être masquée côté réseau afin qu'un ESP ne puisse pas simplement récupérer sa position.
 
-> Un fichier signalé n'est **pas** une preuve. C'est une aide à la vérification manuelle par l'admin.
+Le système utilise notamment :
 
-### 3. Capture d'écran
-Un admin peut demander une capture de ce qu'un joueur a à l'écran dans GMod. La capture est **silencieuse** (le joueur n'en est pas informé), limitée à la fenêtre du jeu, et enregistrée côté serveur.
+- la distance ;
+- le PVS de Garry's Mod ;
+- un cache des mouvements ;
+- des vérifications de visibilité lorsque c'est nécessaire ;
+- un délai de masquage pour éviter les changements brusques ;
+- une anticipation des mouvements pour limiter les apparitions tardives.
 
-> Limite honnête : un cheat qui contrôle le rendu peut masquer son affichage pendant la capture. La capture attrape les ESP en Lua, les menus de triche ouverts et les cheats mal réglés — pas un cheat « screenproof » bien configuré. C'est l'anti-ESP qui couvre ce cas, en amont.
+Les décisions importantes sont prises côté serveur.
 
-### 4. Logs
-Un journal en lecture seule de toutes les actions (analyses, captures, réglages modifiés), copiable en un clic pour le debug.
+Le système est conçu pour rester utilisable sur des serveurs pouvant atteindre environ 128 joueurs.
+
+### Vérification des scripts
+
+Un administrateur peut analyser les fichiers accessibles dans le dossier Garry's Mod du joueur.
+
+Les fichiers peuvent être signalés lorsqu'ils correspondent à une signature connue, par exemple :
+
+- ESP ;
+- API de cheat ;
+- script suspect ;
+- fichier anormalement volumineux.
+
+Le contenu d'un fichier peut ensuite être consulté directement dans le menu.
+
+Un fichier signalé n'est pas considéré comme une preuve de triche. Cat sert à faciliter la vérification manuelle par l'administrateur.
+
+### Capture
+
+Un administrateur peut demander une capture de ce que le joueur voit dans Garry's Mod.
+
+La capture :
+
+- concerne uniquement le rendu du jeu ;
+- est enregistrée côté serveur ;
+- ne capture pas le bureau ni les autres applications ;
+- peut être consultée depuis le menu Cat.
+
+La capture reste un outil complémentaire. Un cheat capable de modifier son rendu spécifiquement pour éviter une capture peut ne pas apparaître sur celle-ci. L'anti-ESP protège alors en amont en limitant les informations envoyées au client.
+
+### Logs
+
+Cat peut conserver un historique des actions importantes :
+
+- analyses ;
+- captures ;
+- modifications de configuration ;
+- actions des administrateurs.
+
+Les logs sont uniquement destinés au suivi et au dépannage.
 
 ---
 
 ## Installation
 
-1. Placer le dossier `cat` dans `garrysmod/addons/`.
-   L'arborescence doit ressembler à : `garrysmod/addons/cat/lua/autorun/cat_init.lua`
-2. Ouvrir `garrysmod/addons/cat/lua/cat/sv_config.lua` et remplacer le SteamID64 d'exemple par le vôtre et ceux de vos admins :
-   ```lua
-   admins_autorises = {
-       ["76561198XXXXXXXXX"] = true,
-   },
-   ```
-   (Un SteamID64 se trouve sur https://steamid.io )
-3. Redémarrer le serveur.
+Placez le dossier `cat` dans :
 
-`cat` crée tout seul les dossiers dont il a besoin (`data/cat/…`). Aucune dépendance, aucun autre addon requis.
+```text
+garrysmod/addons/
+```
+
+Vous devez obtenir une structure similaire à :
+
+```text
+garrysmod/
+└── addons/
+    └── cat/
+        └── lua/
+            └── autorun/
+                └── cat_init.lua
+```
+
+Configurez ensuite les administrateurs autorisés dans :
+
+```text
+lua/cat/sv_config.lua
+```
+
+Exemple :
+
+```lua
+admins_autorises = {
+    ["76561198XXXXXXXXX"] = true,
+}
+```
+
+Remplacez le SteamID64 d'exemple par celui des administrateurs concernés.
+
+Aucune dépendance externe n'est nécessaire.
+
+Redémarrez ensuite le serveur.
+
+Cat crée automatiquement les dossiers dont il a besoin dans `data/cat/`.
 
 ---
 
 ## Utilisation
 
-Ouvrir le menu en jeu (admins autorisés uniquement) :
-- commande chat : `!cat`
-- ou console : `cat_menu`
+Les administrateurs autorisés peuvent ouvrir Cat avec :
 
-Le menu a quatre onglets : **Anti-ESP**, **Vérification**, **Capture**, **Logs**.
+```text
+!cat
+```
+
+ou depuis la console :
+
+```text
+cat_menu
+```
+
+Le menu contient quatre sections :
+
+- **Anti-ESP**
+- **Vérification**
+- **Capture**
+- **Logs**
+
+Chaque section reste volontairement limitée à ce qui est nécessaire.
 
 ---
 
 ## Configuration
 
-Tous les réglages de l'anti-ESP se modifient depuis l'onglet Anti-ESP, ou via ConVars dans `server.cfg`. Les principaux :
+Les principaux réglages de l'anti-ESP sont disponibles depuis Cat ou via les ConVars du serveur.
 
-| ConVar | Défaut | Rôle |
-|---|---|---|
+| ConVar | Défaut | Description |
+|---|---:|---|
 | `cat_actif` | `1` | Active l'anti-ESP |
-| `cat_distance_proche` | `350` | En deçà, les joueurs restent toujours visibles |
-| `cat_distance_max` | `0` | Au-delà, plus rien n'est envoyé (0 = désactivé) |
-| `cat_delai_masquage` | `0.6` | Délai avant de cacher un joueur (anti-clignotement) |
-| `cat_anticipation` | `0.15` | Anticipation des mouvements (anti-apparition tardive) |
-| `cat_props_bloquent` | `0` | Les props et portes bloquent la vue |
-| `cat_traces_par_tick` | `120` | Budget de calcul par tick (baisser si le serveur rame) |
+| `cat_distance_proche` | `350` | Distance en dessous de laquelle les joueurs restent visibles |
+| `cat_distance_max` | `0` | Distance maximale de transmission, `0` pour désactiver |
+| `cat_delai_masquage` | `0.6` | Délai avant de masquer un joueur |
+| `cat_anticipation` | `0.15` | Anticipe légèrement les mouvements |
+| `cat_props_bloquent` | `0` | Utilise les props et les portes pour déterminer la visibilité |
+| `cat_traces_par_tick` | `120` | Nombre maximal de vérifications de visibilité par tick |
 
-Les réglages sensibles (whitelist admin, signatures, conservation des captures) sont dans `sv_config.lua`, jamais envoyé aux clients.
+Les réglages plus sensibles, comme les administrateurs autorisés, les signatures et la conservation des captures, restent dans `sv_config.lua`.
 
-Diagnostic performances en console : `cat_stats`.
+Pour vérifier rapidement le fonctionnement de l'anti-ESP :
+
+```text
+cat_stats
+```
 
 ---
 
 ## Sécurité
 
-- Les permissions sont déterminées **côté serveur** par une whitelist de SteamID64. Le client ne décide de rien.
-- Chaque message réseau est revérifié côté serveur.
-- Les chemins de fichiers sont validés (pas de remontée de dossier).
-- Les gros transferts (captures) passent par morceaux, avec un plafond de taille.
-- Aucun secret n'est stocké dans le code client.
+Cat effectue les contrôles importants côté serveur.
+
+- Les permissions sont vérifiées avec une whitelist SteamID64.
+- Les clients ne peuvent pas décider de leurs propres permissions.
+- Les messages réseau sont vérifiés côté serveur.
+- Les chemins de fichiers sont contrôlés.
+- Les transferts importants sont limités et envoyés par morceaux lorsque nécessaire.
+- Aucun secret n'est placé dans le code client.
+- Les fonctions d'administration ne sont accessibles qu'aux personnes autorisées.
+
+---
+
+## Limites
+
+Cat ne cherche pas à détecter tous les types de cheats.
+
+Il ne s'agit pas d'un système de détection d'aimbot, de bhop ou de speedhack.
+
+La vérification des scripts repose sur les fichiers auxquels Garry's Mod permet d'accéder. Un fichier inconnu ou chiffré peut donc ne pas être identifié.
+
+La capture montre le rendu de Garry's Mod au moment où elle est effectuée. Elle ne permet pas de garantir qu'un cheat ne modifie pas son affichage pour la masquer.
+
+L'anti-ESP reste donc la protection principale.
 
 ---
 
 ## Licence
 
-Sous licence **MIT** (voir le fichier `LICENSE`). Usage, modification et redistribution **libres**, pour tout le monde, y compris à des fins commerciales. Remaniez-le à votre sauce.
+Cat est distribué sous licence **MIT**.
+
+Vous pouvez l'utiliser, le modifier et le redistribuer librement, y compris dans un projet commercial.
+
+Voir le fichier `LICENSE` pour les conditions complètes.
