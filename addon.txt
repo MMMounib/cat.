@@ -1,0 +1,10 @@
+"AddonInfo"
+{
+	"name"		"cat"
+	"author_name"	"Mounib"
+	"type"		"servercontent"
+	"tags"		"fun"
+	"ignore"
+	{
+	}
+}
